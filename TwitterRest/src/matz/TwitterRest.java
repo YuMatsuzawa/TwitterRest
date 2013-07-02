@@ -54,7 +54,7 @@ public class TwitterRest {
 			User thisone = status.getUser();
 			String thisoneId = String.format("%d", thisone.getId());
 			if (!userList.contains(thisoneId)) {
-				userList.add(thisoneId);
+				userList.add(thisoneId); //new relevant user addition
 				bw.write(thisoneId);
 				bw.newLine();
 			}
