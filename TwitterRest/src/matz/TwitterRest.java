@@ -13,6 +13,7 @@ public class TwitterRest {
 	private final static String cursorResetOption = "-cr";
 	private final static String fileRefreshOption = "-fr";
 	private final static String initializeOption = "-init";
+	private final static String queriesListOption = "-l";
 	
 	public static ArrayList<String> queryKeyWordsList = new ArrayList<String>();
 	public static File currentIdFile = new File("currentId.txt");
@@ -20,11 +21,47 @@ public class TwitterRest {
 	public static File userListFile = new File("userList.txt");
 	public static File userDir = new File("userDir");
 	public static ArrayList<String> userList = new ArrayList<String>();
-	public static ConfigurationBuilder cb = new ConfigurationBuilder();
+
+	private final static int authIdIndex = 0;
+	private final static int authCnsKeyIndex = 1;
+	private final static int authCnsSecIndex = 2;
+	private final static int authAccTknIndex = 3;
+	private final static int authAccSecIndex = 4;
+	private final static int authLastCallIndex = 5;
+	private final static int authCallCountIndex = 6;
+	private static ConfigurationBuilder cb = new ConfigurationBuilder();
+	private static int currentAuthId;
+	public static void setCB(int index) {
+		System.out.println("Auth with id: " + OAuthList[index][authIdIndex]);
+		currentAuthId = index;
+		cb.setDebugEnabled(true)
+		.setOAuthConsumerKey(OAuthList[index][authCnsKeyIndex])
+		.setOAuthConsumerSecret(OAuthList[index][authCnsSecIndex])
+		.setOAuthAccessToken(OAuthList[index][authAccTknIndex])
+		.setOAuthAccessTokenSecret(OAuthList[index][authAccSecIndex])
+	    .setJSONStoreEnabled(true);
+		//return cb;
+	}
+	
+	private static void lastCall(int index) {
+		long time = System.currentTimeMillis();
+		OAuthList[index][authLastCallIndex] = Long.toString(time);
+	}
+	private static void callCount(int index) {
+		int count = Integer.parseInt(OAuthList[index][authCallCountIndex]);
+		OAuthList[index][authCallCountIndex] = Integer.toString(count);
+	}
+	
+	private static Twitter buildTwitterIns(int index) {
+		setCB(index);
+		lastCall(index);
+		TwitterFactory tf = new TwitterFactory(cb.build());
+		return tf.getInstance();
+	}
 	
 	public static void setQueryKeyWordsList(File file) {
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 			String line = new String();
 			while((line = br.readLine()) != null) {
 				queryKeyWordsList.add(line);
@@ -35,9 +72,10 @@ public class TwitterRest {
 		}
 	}
 
-	public static void extractUsers(String queryKeyWords, long currentId, Twitter twitter)
+	public static long extractUsers(String queryKeyWords, long currentId, Twitter twitter)
 			throws FileNotFoundException, TwitterException, IOException {
 		Query query = new Query(queryKeyWords);
+		System.out.println(queryKeyWords);
 		
 		OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(userListFile, forceFileRefresh? false : true));
 		BufferedWriter bw = new BufferedWriter(osw);
@@ -45,11 +83,11 @@ public class TwitterRest {
 		query.setSinceId(forceCursorReset? 0 : currentId);
 		query.setCount(100);
 		QueryResult result = twitter.search(query);
+		callCount(currentAuthId);
 
-		long since = result.getSinceId();
+		//long since = result.getSinceId();
 		long until = result.getMaxId();
 		
-		System.out.println("Since " + since + " until " + until);
 		for (Status status : result.getTweets()) { //pickup relevant user
 			User thisone = status.getUser();
 			String thisoneId = String.format("%d", thisone.getId());
@@ -63,15 +101,17 @@ public class TwitterRest {
 		bw.close();
 		osw.close();
 		
-		OutputStreamWriter osw1 = new OutputStreamWriter(new FileOutputStream(currentIdFile));
-		BufferedWriter bw1 = new BufferedWriter(osw1);
+		//OutputStreamWriter osw1 = new OutputStreamWriter(new FileOutputStream(currentIdFile));
+		//BufferedWriter bw1 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentIdFile)));
 		
-		long nextSince = until + 1;
-		bw1.write(Long.toString(nextSince));
-		bw1.close();
-		osw1.close();
+		long nextSince = until;
+		return nextSince;
+		
+		//bw1.write(Long.toString(nextSince));
+		//bw1.close();
+		//osw1.close();
 	}
-	
+
 	public static void main (String[] args) {
 		String queryKeyWords = "Ž©–¯“}";
 		for (int i=0; i<args.length; i++) {
@@ -81,8 +121,9 @@ public class TwitterRest {
 				forceFileRefresh = true;
 			} else if(args[i].matches(initializeOption)){
 				forceInitialize = true;
-			} else if(args[i] == "queries.txt" && new File(args[i]).exists()) {
-				setQueryKeyWordsList(new File(args[i]));
+			} else if(args[i].matches(queriesListOption)) {
+				File queriesFile = new File("queries.txt");
+				setQueryKeyWordsList(queriesFile);
 			} else {
 				queryKeyWords = args[i];
 			}
@@ -112,24 +153,27 @@ public class TwitterRest {
 		}
 		
 		//ConfigurationBuilder cb = new ConfigurationBuilder();
-		cb.setDebugEnabled(true)
+		/*cb.setDebugEnabled(true)
 		.setOAuthConsumerKey("KuG34YZ202uEZCHgHQhQ")
 		.setOAuthConsumerSecret("5R9nqymC0Zl5pF5KSDr80gCOTHqkaPS9sehrGoMpI")
 		.setOAuthAccessToken("352840258-QrB0NPIYNtGiNUt3vnetmnMumnppJETnvccdZVJa")
 		.setOAuthAccessTokenSecret("PkuqzpWNCWglAGKtMfUeg1UVCRQqjqesmlOuyrVA")
-	    .setJSONStoreEnabled(true);
+	    .setJSONStoreEnabled(true);*/
+		/*setCB(0);
+		
 		
 		TwitterFactory tf = new TwitterFactory(cb.build());
-		Twitter twitter = tf.getInstance();
+		Twitter twitter = tf.getInstance();*/
+		
+		Twitter twitter = buildTwitterIns(0);
 		
 		try {
 			InputStreamReader isr = new InputStreamReader(new FileInputStream(currentIdFile));
 			BufferedReader br = new BufferedReader(isr);
 			
-			String line = new String();
-			while((line = br.readLine()) != null) {
-				currentId = Long.parseLong(line);
-			}
+			String line = br.readLine();
+			currentId = Long.parseLong(line);
+			
 			br.close();
 			isr.close();
 		} catch (Exception e) {
@@ -138,13 +182,43 @@ public class TwitterRest {
 		
 
 		try {
+			System.out.println("Since " + currentId);
 			//search for relevant users
-			extractUsers(queryKeyWords, currentId, twitter);
+			long tmp = Long.MAX_VALUE;
+			if (!queryKeyWordsList.isEmpty()){
+				for (String query : queryKeyWordsList) {
+					long thisUntil = extractUsers(query, currentId, twitter);
+					if (tmp > thisUntil) tmp = thisUntil;
+				}
+			} else {
+				tmp = extractUsers(queryKeyWords, currentId, twitter);
+			}
+			currentId = tmp;
+
+			BufferedWriter bw1 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(currentIdFile)));
+			bw1.write(Long.toString(currentId));
+			bw1.close();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 	}
-
+	
+	public static String[][] OAuthList = {
+		{	"gada_twt",
+			"KuG34YZ202uEZCHgHQhQ",
+			"5R9nqymC0Zl5pF5KSDr80gCOTHqkaPS9sehrGoMpI",
+			"352840258-QrB0NPIYNtGiNUt3vnetmnMumnppJETnvccdZVJa",
+			"PkuqzpWNCWglAGKtMfUeg1UVCRQqjqesmlOuyrVA",
+			"",
+			"0"},
+		{	"matz_0001",
+			"3Szgzy5KOLrpY5KgXPj5Og",
+			"sfrMISapC9I9RB1xK1nXLuBwLxuOshRTjJOpO4Ddfo",
+			"1562516232-4BOWKF2kplQ9rgJIuhSKaby7GOFVF8Cjy9afvC8",
+			"VGxbc7Pgsieylc3Cw3sgnwMjwO0LHkTVbljZg3Lr8",
+			"",
+			"0"},
+	};
 }

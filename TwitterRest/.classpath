@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/Yu/git/TwitterRest/TwitterRest/twitter4j-3.0.3/lib/twitter4j-core-3.0.3.jar" sourcepath="twitter4j-3.0.3/twitter4j-core/src">
+	<classpathentry kind="lib" path="C:/Users/Yu/git/TwitterRest/TwitterRest/twitter4j-3.0.3/lib/twitter4j-core-3.0.3.jar" sourcepath="twitter4j-3.0.3/twitter4j-core/twitter4j-core-3.0.3-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="file:/C:/Users/Yu/git/TwitterRest/TwitterRest/twitter4j-3.0.3/twitter4j-core/javadoc/"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/TwitterRest/twitter4j-3.0.3/twitter4j-core/twitter4j-core-3.0.3-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="bin"/>

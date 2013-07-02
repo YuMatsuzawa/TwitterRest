@@ -31,11 +31,11 @@ public class UserTimelines {
 			e.printStackTrace();
 		}
 		
-		cb.setDebugEnabled(true)
-		.setOAuthConsumerKey("KuG34YZ202uEZCHgHQhQ")
-		.setOAuthConsumerSecret("5R9nqymC0Zl5pF5KSDr80gCOTHqkaPS9sehrGoMpI")
-		.setOAuthAccessToken("352840258-QrB0NPIYNtGiNUt3vnetmnMumnppJETnvccdZVJa")
-		.setOAuthAccessTokenSecret("PkuqzpWNCWglAGKtMfUeg1UVCRQqjqesmlOuyrVA")
+		cb.setDebugEnabled(true) //matz_0001
+		.setOAuthConsumerKey("3Szgzy5KOLrpY5KgXPj5Og")
+		.setOAuthConsumerSecret("sfrMISapC9I9RB1xK1nXLuBwLxuOshRTjJOpO4Ddfo")
+		.setOAuthAccessToken("1562516232-4BOWKF2kplQ9rgJIuhSKaby7GOFVF8Cjy9afvC8")
+		.setOAuthAccessTokenSecret("VGxbc7Pgsieylc3Cw3sgnwMjwO0LHkTVbljZg3Lr8")
 	    .setJSONStoreEnabled(true);
 		
 		TwitterFactory tf = new TwitterFactory(cb.build());
