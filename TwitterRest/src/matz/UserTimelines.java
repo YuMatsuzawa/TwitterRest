@@ -1,20 +1,48 @@
 package matz;
 
 import java.io.*;
-import java.util.ArrayList;
 
-import twitter4j.*;
-import twitter4j.conf.ConfigurationBuilder;
+import twitter4j.Paging;
+import twitter4j.ResponseList;
+import twitter4j.Status;
 import twitter4j.json.DataObjectFactory;
 
-public class UserTimelines {
-	public static File userListFile = new File("userList.txt");
-	public static ArrayList<String> userList = new ArrayList<String>();
-	public static ConfigurationBuilder cb = new ConfigurationBuilder();
+public class UserTimelines extends TwitterRest {
+	private static int timeLineAuthHead = 1;
+	private static int timeLineAuthTail;
 	
-	public static File userDir = new File("userDir");
+	private static void setTimeLineAuthTail() {
+		timeLineAuthTail = OAuthList.length - 1;
+	}
+
+	private static Paging setPaging(File thisUsersCurr) throws Exception {
+		Paging paging = new Paging();
+		paging.setCount(200);
+		if(thisUsersCurr.exists()) {
+			BufferedReader cbr = new BufferedReader(new InputStreamReader(new FileInputStream(thisUsersCurr)));
+			String curr = cbr.readLine();
+			paging.setSinceId(Long.parseLong(curr));
+			cbr.close();
+		}
+		return paging;
+	}
+	
+	public static boolean findAvailableAuth()  {
+		int groundId = currentAuthId;
+		//twitter = buildTwitterIns((groundId  == timeLineAuthTail) ? timeLineAuthHead : groundId + 1);
+		while(!authAvailabilityCheck()) {
+			int nextId = (currentAuthId == timeLineAuthTail)? timeLineAuthHead : currentAuthId + 1;
+			if (nextId == groundId) return false;
+			
+			twitter = buildTwitterIns(nextId);
+		}
+		return true;
+	}
 
 	public static void main(String[] args) {
+		loadAuthInfo();
+		setTimeLineAuthTail();
+		
 		try { //userList loading
 			BufferedReader ulbr = new BufferedReader(new InputStreamReader(new FileInputStream(userListFile)));
 			String userid = new String();
@@ -31,36 +59,29 @@ public class UserTimelines {
 			e.printStackTrace();
 		}
 		
-		cb.setDebugEnabled(true) //matz_0001
-		.setOAuthConsumerKey("3Szgzy5KOLrpY5KgXPj5Og")
-		.setOAuthConsumerSecret("sfrMISapC9I9RB1xK1nXLuBwLxuOshRTjJOpO4Ddfo")
-		.setOAuthAccessToken("1562516232-4BOWKF2kplQ9rgJIuhSKaby7GOFVF8Cjy9afvC8")
-		.setOAuthAccessTokenSecret("VGxbc7Pgsieylc3Cw3sgnwMjwO0LHkTVbljZg3Lr8")
-	    .setJSONStoreEnabled(true);
+		//Twitter twitter = buildTwitterIns(timeLineAuthHead); //matz_0001, init
+		twitter = buildTwitterIns(timeLineAuthHead); //matz_0001, init
 		
-		TwitterFactory tf = new TwitterFactory(cb.build());
-		Twitter twitter = tf.getInstance();
-		
-		//for every recorded users, get their recent tweets
-		try {
+		try {	//for every recorded users, get their recent tweets
 			for (String id : userList) {
-				File thisUsersFile = new File(userDir,id + ".txt");
-				File thisUsersCurr = new File(userDir,id + ".curr.txt");
-				long idLong = Long.parseLong(id);
-				Paging paging = new Paging();
-				paging.setCount(200);
-				long maxid = 0;
-				if(thisUsersCurr.exists()) {
-					BufferedReader cbr = new BufferedReader(new InputStreamReader(new FileInputStream(thisUsersCurr)));
-					String curr = cbr.readLine();
-					paging.setSinceId(Long.parseLong(curr));
-					cbr.close();
+				while (!findAvailableAuth()) {
+					sleepUntilReset();
 				}
 				
-				ResponseList<Status> timeLine = twitter.getUserTimeline(idLong, paging);
+				File thisUsersFile = new File(userDir,id + ".txt");
+				File thisUsersCurr = new File(userDir,id + ".curr.txt");
+				long userIdLong = Long.parseLong(id);
+				long maxid = 1;
+				
+				Paging paging = setPaging(thisUsersCurr);
+				
+				ResponseList<Status> timeLine = twitter.getUserTimeline(userIdLong, paging);
+				callCount(currentAuthId);
+				
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(thisUsersFile, true)));
 				for (Status status : timeLine) {
-					maxid = (status.getId() > maxid)? status.getId() : maxid;
+					long tmpid = status.getId(); 
+					maxid = (tmpid > maxid)? tmpid : maxid;
 					String rawJSON = DataObjectFactory.getRawJSON(status);
 					bw.write(rawJSON);
 					bw.newLine();
@@ -68,16 +89,18 @@ public class UserTimelines {
 				bw.close();
 				
 				BufferedWriter cbw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(thisUsersCurr)));
-				cbw.write(Long.toString(maxid + 1));
+				cbw.write(Long.toString(maxid));
 				cbw.close();
 				System.out.println(thisUsersFile);
 				//break;
 			}
 		} catch (Exception e) {
+			saveAuthInfo();
 			e.printStackTrace();
 		}
-		
 
+		saveAuthInfo();
+		System.out.println("Done.");
 	}
 
 }
