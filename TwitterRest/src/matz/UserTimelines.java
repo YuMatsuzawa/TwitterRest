@@ -1,6 +1,7 @@
 package matz;
 
 import java.io.*;
+
 import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
@@ -8,8 +9,13 @@ import twitter4j.TwitterException;
 import twitter4j.json.DataObjectFactory;
 
 public class UserTimelines extends TwitterRest {
+	private static boolean testPaging = false;
+	public final static String testPagingOption = "-t";
+	
 	private static int timeLineAuthHead = 1;
 	private static int timeLineAuthTail;
+	private static int fullSizeTimeLine = 200;
+	private static int testSizeTimeLine = 5;
 	
 	private static void setTimeLineAuthTail() {
 		timeLineAuthTail = OAuthList.length - 1;
@@ -17,7 +23,7 @@ public class UserTimelines extends TwitterRest {
 
 	private static Paging setPaging(File thisUsersCurr) throws Exception {
 		Paging paging = new Paging();
-		paging.setCount(200);
+		paging.setCount(testPaging? testSizeTimeLine : fullSizeTimeLine);
 		if(thisUsersCurr.exists()) {
 			BufferedReader cbr = new BufferedReader(new InputStreamReader(new FileInputStream(thisUsersCurr)));
 			String curr = cbr.readLine();
@@ -48,6 +54,10 @@ public class UserTimelines extends TwitterRest {
 	public static void main(String[] args) {
 		loadAuthInfo();
 		setTimeLineAuthTail();
+		
+		for (String arg : args) {
+			if (arg == testPagingOption) testPaging = true;
+		}
 		
 		try { //userList loading
 			BufferedReader ulbr = new BufferedReader(new InputStreamReader(new FileInputStream(userListFile)));
@@ -88,14 +98,14 @@ public class UserTimelines extends TwitterRest {
 					timeLine = twitter.getUserTimeline(userIdLong, paging);
 				} catch (TwitterException twe) {
 					System.err.println(twe.getRateLimitStatus().toString());
-					System.err.println();
-					saveAuthInfo();
-					// getSecondsUntilReset returns seconds until limit reset in Integer
+					boolean nextReady = findAvailableAuth();
+					/*// getSecondsUntilReset returns seconds until limit reset in Integer
 					int secondsUntilReset = twe.getRateLimitStatus().getSecondsUntilReset();
 					long retryAfter = (long)(secondsUntilReset * 1000);
 					if (secondsUntilReset <= 0) retryAfter = authLimitWindow;
 					retryAfter += authRetryMargin;
-					sleepUntilReset(retryAfter);
+					sleepUntilReset(retryAfter);*/
+					if (!nextReady) sleepUntilReset();
 					timeLine = twitter.getUserTimeline(userIdLong, paging);
 				} finally {
 					callCount(currentAuthId);
