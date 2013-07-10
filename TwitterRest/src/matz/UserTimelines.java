@@ -34,20 +34,21 @@ public class UserTimelines extends TwitterRest {
 	}
 	
 	public static boolean findAvailableAuth()  {
-		//int groundId = currentAuthId;
+		/*if (authAvailabilityCheck()) return true;
+		
+		int groundId = currentAuthId;
+		int nextId = (currentAuthId == timeLineAuthTail)? timeLineAuthHead : currentAuthId + 1;
 		//twitter = buildTwitterIns((groundId  == timeLineAuthTail) ? timeLineAuthHead : groundId + 1);
-		/*while(!authAvailabilityCheck()) {
-			int nextId = (currentAuthId == timeLineAuthTail)? timeLineAuthHead : currentAuthId + 1;
+		while(!authAvailabilityCheck(nextId)) {
+			nextId = (nextId == timeLineAuthTail)? timeLineAuthHead : nextId + 1;
 			if (nextId == groundId) return false;
-			
-			twitter = buildTwitterIns(nextId);
 		}*/
 		if (!authAvailabilityCheck()) {
 			int nextId = (currentAuthId == timeLineAuthTail)? timeLineAuthHead : currentAuthId + 1;
 			twitter = buildTwitterIns(nextId);
 			saveAuthInfo();
 			if (!authAvailabilityCheck()) return false;
-		}		
+		}
 		return true;
 	}
 
@@ -91,31 +92,43 @@ public class UserTimelines extends TwitterRest {
 				
 				Paging paging = setPaging(thisUsersCurr);
 
-				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(thisUsersFile, true)));
 				
 				ResponseList<Status> timeLine = null;
 				try {
 					timeLine = twitter.getUserTimeline(userIdLong, paging);
 				} catch (TwitterException twe) {
-					System.err.println(twe.getRateLimitStatus().toString());
-					boolean nextReady = findAvailableAuth();
-					/*// getSecondsUntilReset returns seconds until limit reset in Integer
-					int secondsUntilReset = twe.getRateLimitStatus().getSecondsUntilReset();
-					long retryAfter = (long)(secondsUntilReset * 1000);
-					if (secondsUntilReset <= 0) retryAfter = authLimitWindow;
-					retryAfter += authRetryMargin;
-					sleepUntilReset(retryAfter);*/
-					if (!nextReady) sleepUntilReset();
-					timeLine = twitter.getUserTimeline(userIdLong, paging);
-				} finally {
-					callCount(currentAuthId);
-					for (Status status : timeLine) {
-						long tmpid = status.getId(); 
-						maxid = (tmpid > maxid)? tmpid : maxid;
-						String rawJSON = DataObjectFactory.getRawJSON(status);
-						bw.write(rawJSON);
-						bw.newLine();
+					/* for private users, accessing their timeline will return you 401: Not Authorized error.
+					 * capture 401 and just continue it.
+					 * there are some other statuses which could halt the script, you should handle them.
+					 */
+					int statusCode = twe.getStatusCode();
+					if (statusCode == STATUS_UNAUTHORIZED || statusCode == STATUS_NOT_FOUND) {
+						callCount(currentAuthId);
+						continue;
+					} else if (statusCode == STATUS_BAD_GATEWAY || statusCode == STATUS_SERVICE_UNAVAILABLE) {
+						sleepUntilReset(authLimitWindow);
+					} else if (statusCode == STATUS_TOO_MANY_REQUESTS || statusCode == STATUS_ENHANCE_YOUR_CALM) {
+						int secondsUntilReset = twe.getRateLimitStatus().getSecondsUntilReset(); // getSecondsUntilReset returns seconds until limit reset in Integer
+						long retryAfter = (long)(secondsUntilReset * 1000);
+						if (secondsUntilReset <= 0) retryAfter = authLimitWindow;
+						retryAfter += authRetryMargin;
+						sleepUntilReset(retryAfter);
+					} else {
+						twe.printStackTrace();
+						throw twe;
 					}
+					timeLine = twitter.getUserTimeline(userIdLong, paging);
+				}
+
+				callCount(currentAuthId);
+				
+				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(thisUsersFile, true)));
+				for (Status status : timeLine) {
+					long tmpid = status.getId(); 
+					maxid = (tmpid > maxid)? tmpid : maxid;
+					String rawJSON = DataObjectFactory.getRawJSON(status);
+					bw.write(rawJSON);
+					bw.newLine();
 				}
 				
 				bw.close();

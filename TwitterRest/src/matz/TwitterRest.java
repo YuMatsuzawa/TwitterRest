@@ -42,6 +42,13 @@ public class TwitterRest {
 	public static File authInfoEmergency = new File("authInfo.emergency");
 	public static String authInfoFileDelim = ",";
 	private static int keywordSearchAuthIndex = 0;
+
+	public final static int STATUS_UNAUTHORIZED = 401;
+	public final static int STATUS_NOT_FOUND = 404;
+	public final static int STATUS_ENHANCE_YOUR_CALM = 420;
+	public final static int STATUS_TOO_MANY_REQUESTS = 429;
+	public final static int STATUS_BAD_GATEWAY = 502;
+	public final static int STATUS_SERVICE_UNAVAILABLE = 503;
 	
 	public static void loadAuthInfo() {
 		try {
@@ -155,6 +162,20 @@ public class TwitterRest {
 			return false;
 		}
 		return true; // neither
+	}
+	
+	public static boolean authAvailabilityCheck(int index) {
+		// check if current auth profile still within the rate limit
+		int count = Integer.parseInt(OAuthList[index][authCallCountIndex]);
+		long lastCall = Long.parseLong(OAuthList[index][authLastCallIndex]);
+		long curr = System.currentTimeMillis();
+		if (curr - lastCall > authLimitWindow) { // 15min passed from previous call
+			return true;
+		} else if(count >= authRateLimit) { // rate limit reached
+			return false;
+		}
+		return true; // neither
+		
 	}
 
 	public static void sleepUntilReset() throws InterruptedException {
