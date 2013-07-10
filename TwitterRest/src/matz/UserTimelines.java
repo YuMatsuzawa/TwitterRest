@@ -1,10 +1,10 @@
 package matz;
 
 import java.io.*;
-
 import twitter4j.Paging;
 import twitter4j.ResponseList;
 import twitter4j.Status;
+import twitter4j.TwitterException;
 import twitter4j.json.DataObjectFactory;
 
 public class UserTimelines extends TwitterRest {
@@ -28,14 +28,20 @@ public class UserTimelines extends TwitterRest {
 	}
 	
 	public static boolean findAvailableAuth()  {
-		int groundId = currentAuthId;
+		//int groundId = currentAuthId;
 		//twitter = buildTwitterIns((groundId  == timeLineAuthTail) ? timeLineAuthHead : groundId + 1);
-		while(!authAvailabilityCheck()) {
+		/*while(!authAvailabilityCheck()) {
 			int nextId = (currentAuthId == timeLineAuthTail)? timeLineAuthHead : currentAuthId + 1;
 			if (nextId == groundId) return false;
 			
 			twitter = buildTwitterIns(nextId);
-		}
+		}*/
+		if (!authAvailabilityCheck()) {
+			int nextId = (currentAuthId == timeLineAuthTail)? timeLineAuthHead : currentAuthId + 1;
+			twitter = buildTwitterIns(nextId);
+			saveAuthInfo();
+			if (!authAvailabilityCheck()) return false;
+		}		
 		return true;
 	}
 
@@ -74,18 +80,34 @@ public class UserTimelines extends TwitterRest {
 				long maxid = 1;
 				
 				Paging paging = setPaging(thisUsersCurr);
-				
-				ResponseList<Status> timeLine = twitter.getUserTimeline(userIdLong, paging);
-				callCount(currentAuthId);
-				
+
 				BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(thisUsersFile, true)));
-				for (Status status : timeLine) {
-					long tmpid = status.getId(); 
-					maxid = (tmpid > maxid)? tmpid : maxid;
-					String rawJSON = DataObjectFactory.getRawJSON(status);
-					bw.write(rawJSON);
-					bw.newLine();
+				
+				ResponseList<Status> timeLine = null;
+				try {
+					timeLine = twitter.getUserTimeline(userIdLong, paging);
+				} catch (TwitterException twe) {
+					System.err.println(twe.getRateLimitStatus().toString());
+					System.err.println();
+					saveAuthInfo();
+					// getSecondsUntilReset returns seconds until limit reset in Integer
+					int secondsUntilReset = twe.getRateLimitStatus().getSecondsUntilReset();
+					long retryAfter = (long)(secondsUntilReset * 1000);
+					if (secondsUntilReset <= 0) retryAfter = authLimitWindow;
+					retryAfter += authRetryMargin;
+					sleepUntilReset(retryAfter);
+					timeLine = twitter.getUserTimeline(userIdLong, paging);
+				} finally {
+					callCount(currentAuthId);
+					for (Status status : timeLine) {
+						long tmpid = status.getId(); 
+						maxid = (tmpid > maxid)? tmpid : maxid;
+						String rawJSON = DataObjectFactory.getRawJSON(status);
+						bw.write(rawJSON);
+						bw.newLine();
+					}
 				}
+				
 				bw.close();
 				
 				BufferedWriter cbw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(thisUsersCurr)));

@@ -36,7 +36,7 @@ public class TwitterRest {
 	public static int currentAuthId;
 	public static Twitter twitter;
 	public final static long authLimitWindow = 15*60*1000; //milliseconds
-	public final static long authRetryMargin = 1*60*1000;
+	public final static long authRetryMargin = 30*1000;
 	public final static int authRateLimit = 180;
 	public static File authInfoFile = new File("authInfo.txt");
 	public static File authInfoEmergency = new File("authInfo.emergency");
@@ -163,6 +163,11 @@ public class TwitterRest {
 		long authResetInMilliSec = lastCall + authLimitWindow + authRetryMargin - curr;
 		System.out.println("Waiting for call limit reset: " + (authResetInMilliSec / 1000) + "sec");
 		Thread.sleep(authResetInMilliSec);
+	}
+	
+	public static void sleepUntilReset(long retryAfter) throws InterruptedException {
+		System.out.println("Waiting for call limit reset: " + (retryAfter / 1000) + "sec");
+		Thread.sleep(retryAfter);
 	}
 	
 	public static void setQueryKeyWordsList(File file) {
