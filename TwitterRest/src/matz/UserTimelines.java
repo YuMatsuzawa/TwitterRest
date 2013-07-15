@@ -53,7 +53,7 @@ public class UserTimelines extends TwitterRest {
 	}
 
 	public static void main(String[] args) {
-		loadAuthInfo();
+		OAuthList = loadAuthInfo();
 		setTimeLineAuthTail();
 		
 		for (String arg : args) {
