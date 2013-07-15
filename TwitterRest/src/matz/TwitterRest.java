@@ -50,9 +50,46 @@ public class TwitterRest {
 	public final static int STATUS_BAD_GATEWAY = 502;
 	public final static int STATUS_SERVICE_UNAVAILABLE = 503;
 	
-	public static void loadAuthInfo() {
+	public static String[][] authInfoReader(File src) throws IOException {
+		ArrayList<String[]> tmpList = new ArrayList<String[]>();
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(src)));
+		String authInfoLine = new String();
+		while ((authInfoLine = br.readLine()) != null) {
+			String[] tmpArray = new String[OAuthListLength];
+			StringTokenizer st = new StringTokenizer(authInfoLine,authInfoFileDelim);
+			for (int i=0;i<OAuthListLength;i++){
+				try {
+					tmpArray[i] = st.nextToken();
+				} catch (NoSuchElementException e) {
+					tmpArray[i] = "0";
+				}
+			}
+			tmpList.add(tmpArray);
+		}
+		br.close();
+
+		return tmpList.toArray(new String[tmpList.size()][OAuthListLength]);
+	}
+	
+	public static String[][] loadAuthInfo() {
 		try {
-			ArrayList<String[]> tmpList = new ArrayList<String[]>();
+			String [][] normalList = authInfoReader(authInfoFile);
+			String [][] emergencyList = (authInfoEmergency.exists()) ? authInfoReader(authInfoEmergency) : null;
+			
+			String [][] tmpList = new String[normalList.length][OAuthListLength];
+			if (authInfoEmergency.exists()) {
+				for (int i = 0; i < normalList.length; i++) {
+					if (i >= emergencyList.length) {
+						tmpList[i] = normalList[i];
+					} else {
+						tmpList[i] = (Long.parseLong(normalList[i][authLastCallIndex]) > Long.parseLong(emergencyList[i][authLastCallIndex]))? 
+								normalList[i] : emergencyList[i];
+					}
+				}
+			} else {
+				tmpList = normalList;
+			}
+			/*ArrayList<String[]> tmpList = new ArrayList<String[]>();
 			BufferedReader br;
 			if (authInfoEmergency.exists() && authInfoEmergency.lastModified() > authInfoFile.lastModified()) { //退避ファイルチェック
 				br = new BufferedReader(new InputStreamReader(new FileInputStream(authInfoEmergency)));
@@ -72,24 +109,59 @@ public class TwitterRest {
 				}
 				tmpList.add(tmpArray);
 			}
-			br.close();
+			br.close();*/
+			
 			authInfoEmergency.delete();
 
-			OAuthList = tmpList.toArray(new String[tmpList.size()][OAuthListLength]);
+			//OAuthList = tmpList.toArray(new String[tmpList.size()][OAuthListLength]);
+			//return tmpList.toArray(new String[tmpList.size()][OAuthListLength]);
+			return tmpList;
 		} catch (IOException e) {
-			OAuthList = OAuthListDefault;
+			//OAuthList = OAuthListDefault;
+			return OAuthListDefault;
 		}
 	}
+	
+	public static void authInfoWriter(File dest) throws IOException {
+		String[][] latestOAuthList = loadAuthInfo();
+		
+		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest)));
+		
+		for (int i = 0; i < latestOAuthList.length; i++) {
+			if (i != keywordSearchAuthIndex && i < OAuthList.length) {
+				for (String value : OAuthList[i]) {
+					bw.write(value + authInfoFileDelim);
+				}
+			} else {
+				for (String value : latestOAuthList[i]) {
+					bw.write(value + authInfoFileDelim);
+				}
+			}
+			bw.newLine();
+		}
+		bw.close();
+	}
+	
 	public static void saveAuthInfo() {
 		try {
+			authInfoWriter(authInfoFile);
+/*			String[][] latestOAuthList = loadAuthInfo();
+			
 			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(authInfoFile)));
-			for (String[] authInfo : OAuthList) {
-				for (String value : authInfo) {
-					bw.write(value + authInfoFileDelim);
+			
+			for (int i = 0; i < latestOAuthList.length; i++) {
+				if (i != keywordSearchAuthIndex && i < OAuthList.length) {
+					for (String value : OAuthList[i]) {
+						bw.write(value + authInfoFileDelim);
+					}
+				} else {
+					for (String value : latestOAuthList[i]) {
+						bw.write(value + authInfoFileDelim);
+					}
 				}
 				bw.newLine();
 			}
-			bw.close();
+			bw.close();*/
 		} catch (FileNotFoundException e) {
 			saveAuthInfoEmergency();
 		} catch (Exception e) {
@@ -99,14 +171,15 @@ public class TwitterRest {
 	
 	private static void saveAuthInfoEmergency() {
 		try {
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(authInfoEmergency)));
+			authInfoWriter(authInfoEmergency);
+/*			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(authInfoEmergency)));
 			for (String[] authInfo : OAuthList) {
 				for (String value : authInfo) {
 					bw.write(value + authInfoFileDelim);
 				}
 				bw.newLine();
 			}
-			bw.close();
+			bw.close();*/
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -238,7 +311,7 @@ public class TwitterRest {
 	}
 
 	public static void main (String[] args) {
-		loadAuthInfo();
+		OAuthList = loadAuthInfo();
 		
 		String queryKeyWord = "自民党";
 		for (int i=0; i<args.length; i++) {
@@ -325,6 +398,7 @@ public class TwitterRest {
 		} catch (Exception e) {
 			saveAuthInfo();
 			e.printStackTrace();
+			return;
 		}
 		
 		saveAuthInfo();
