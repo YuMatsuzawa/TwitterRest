@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for Project TwitterRest with Jar-in-Jar Loader">
+<project default="create_run_jar" name="Create Runnable Jar for Project TwitterRest with libraries in sub-folder">
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
     <target name="create_run_jar">
-        <jar destfile="C:/Users/Yu/TwitterRest.jar">
+        <jar destfile="C:/Users/Matsuzawa/tweetCollector/TwitterRest.jar">
             <manifest>
-                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
-                <attribute name="Rsrc-Main-Class" value="matz.TwitterRest"/>
-                <attribute name="Class-Path" value="."/>
-                <attribute name="Rsrc-Class-Path" value="./ twitter4j-core-3.0.3.jar"/>
+                <attribute name="Main-Class" value="matz.TwitterRest"/>
+                <attribute name="Class-Path" value=". TwitterRest_lib/twitter4j-core-3.0.3.jar"/>
             </manifest>
-            <zipfileset src="jar-in-jar-loader.zip"/>
-            <fileset dir="C:/Users/Yu/workspace/TwitterRest/bin"/>
-            <zipfileset dir="C:\Users\Yu\workspace\TwitterRest\twitter4j-3.0.3\lib" includes="twitter4j-core-3.0.3.jar"/>
+            <fileset dir="C:/Users/Matsuzawa/git/TwitterRest/TwitterRest/bin"/>
         </jar>
+        <delete dir="C:/Users/Matsuzawa/tweetCollector/TwitterRest_lib"/>
+        <mkdir dir="C:/Users/Matsuzawa/tweetCollector/TwitterRest_lib"/>
+        <copy file="C:/Users/Matsuzawa/git/TwitterRest/TwitterRest/twitter4j-3.0.3/lib/twitter4j-core-3.0.3.jar" todir="C:/Users/Matsuzawa/tweetCollector/TwitterRest_lib"/>
     </target>
 </project>

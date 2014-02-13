@@ -23,6 +23,7 @@ public class TLTest {
 
 		try {
 			long id = Long.parseLong("340880618198020095");
+			@SuppressWarnings("unused")
 			Paging paging = new Paging(id);
 			ResponseList<Status> tl = twitter.getUserTimeline("hal_twitter");
 			for(Status status : tl) {
