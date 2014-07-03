@@ -30,7 +30,7 @@ public class KeywordSearchTest {
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		Twitter tw = tf.getInstance();
 		
-		Query query = new Query("Â∞è‰øùÊñπ");
+		Query query = new Query("è¨ï€ï˚");
 		query.count(100);
 		
 		try {
