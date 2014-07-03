@@ -1,6 +1,3 @@
-/**
- * 
- */
 package matz.twitter.search.keyword;
 
 import java.util.ArrayList;
