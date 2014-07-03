@@ -33,7 +33,6 @@ public class KeywordSearchTest {
 		
 		Query query = new Query("è¨ï€ï˚");
 		query.count(100);
-//		.setUntil("2014-06-30");
 		
 		try {
 			QueryResult qr = null;
