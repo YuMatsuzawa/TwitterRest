@@ -41,7 +41,7 @@ public class KeywordSearchTest {
 			
 			do {
 				qr = tw.search(query);
-				//System.out.println(qr.getCompletedIn());
+				System.out.println(qr.getCompletedIn());
 				res.addAll(qr.getTweets());
 			} while ((query = qr.nextQuery())!=null);
 			
