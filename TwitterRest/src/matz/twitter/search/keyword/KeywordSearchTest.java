@@ -41,6 +41,7 @@ public class KeywordSearchTest {
 				do {
 					query = new Query("小保方");
 					query.count(100);
+					query.setUntil("2014-05-30");
 					query.setMaxId(maxid);
 					try{
 						do {
