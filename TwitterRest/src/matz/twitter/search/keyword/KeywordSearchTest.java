@@ -1,6 +1,5 @@
 package matz.twitter.search.keyword;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import twitter4j.*;
@@ -28,20 +27,42 @@ public class KeywordSearchTest {
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		Twitter tw = tf.getInstance();
 		
-		Query query = new Query("小保方");
-		query.count(100);
 		
 		try {
+			Query query = null;
 			QueryResult qr = null;
-			List<Status> res = new ArrayList<Status>();
-			
+			//List<Status> res = new ArrayList<Status>();
+			long maxid = Long.MAX_VALUE;
+			int extraTry = 3;
+			int secondsUntilReset = 300;
+			int total = 0;
+			System.out.println("total\tOldest\t(requiredTime)");
 			do {
-				qr = tw.search(query);
-				res.addAll(qr.getTweets());
-				System.out.println("Oldest: "+res.get(res.size()-1).getCreatedAt().toString()+"\t("+qr.getCompletedIn()+"s)");
-			} while ((query = qr.nextQuery())!=null);
+				do {
+					query = new Query("小保方");
+					query.count(100);
+					query.setMaxId(maxid);
+					try{
+						do {
+							qr = tw.search(query);
+							List<Status> res = qr.getTweets();
+							total += res.size();
+							Status oldest = res.get(res.size()-1);
+							maxid = oldest.getId();
+							System.out.println(total+"\t"+oldest.getCreatedAt().toString()+"\t("+qr.getCompletedIn()+"s)");
+						} while ((query = qr.nextQuery())!=null);
+					} catch (TwitterException te) {
+						if(te.getStatusCode() == 429) {
+							secondsUntilReset = te.getRateLimitStatus().getSecondsUntilReset();
+							System.err.println("API Rate Limit kicked in. "+secondsUntilReset+"s until resume...");
+						}
+						break;
+					}
+				} while(true);
+				System.out.println("TEST: Resuming immediately without sleep. Remaining try: "+(extraTry--));
+			} while(extraTry >= 0);
+			System.out.println("TEST: Done.");
 			
-			System.out.println(res.size());
 			
 		} catch (Exception e) {
 			e.printStackTrace();
