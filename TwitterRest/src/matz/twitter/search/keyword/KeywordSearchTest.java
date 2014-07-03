@@ -28,7 +28,7 @@ public class KeywordSearchTest {
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		Twitter tw = tf.getInstance();
 		
-		Query query = new Query("è¨ï€ï˚");
+		Query query = new Query("Â∞è‰øùÊñπ");
 		query.count(100);
 		
 		try {
@@ -37,8 +37,8 @@ public class KeywordSearchTest {
 			
 			do {
 				qr = tw.search(query);
-				System.out.println(qr.getCompletedIn());
 				res.addAll(qr.getTweets());
+				System.out.println("Oldest: "+res.get(res.size()-1).getCreatedAt().toString()+"\t("+qr.getCompletedIn()+"s)");
 			} while ((query = qr.nextQuery())!=null);
 			
 			System.out.println(res.size());
