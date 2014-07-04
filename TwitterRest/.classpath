@@ -7,17 +7,5 @@
 			<attribute name="javadoc_location" value="http://twitter4j.org/javadoc/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/gmail" sourcepath="lib/gmail/libs-sources"/>
-	<classpathentry kind="lib" path="lib/gmail/google-api-services-gmail-v1-rev3-1.18.0-rc.jar" sourcepath="lib/gmail/google-api-services-gmail-v1-rev3-1.18.0-rc-sources.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/TwitterRest/lib/gmail/google-api-services-gmail-v1-rev3-1.18.0-rc-javadoc.jar!/"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="lib/javamail-1.4.7/mail.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="file:/C:/Users/Matsuzawa/git/TwitterRest/TwitterRest/lib/javamail-1.4.7/docs/javadocs/"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="lib/javamail-1.4.7/lib"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
