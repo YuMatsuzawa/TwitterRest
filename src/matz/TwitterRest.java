@@ -91,7 +91,7 @@ public class TwitterRest {
 			}
 			/*ArrayList<String[]> tmpList = new ArrayList<String[]>();
 			BufferedReader br;
-			if (authInfoEmergency.exists() && authInfoEmergency.lastModified() > authInfoFile.lastModified()) { //‘Ş”ğƒtƒ@ƒCƒ‹ƒ`ƒFƒbƒN
+			if (authInfoEmergency.exists() && authInfoEmergency.lastModified() > authInfoFile.lastModified()) { //é€€é¿ãƒ•ã‚¡ã‚¤ãƒ«ãƒã‚§ãƒƒã‚¯
 				br = new BufferedReader(new InputStreamReader(new FileInputStream(authInfoEmergency)));
 			} else {
 				br = new BufferedReader(new InputStreamReader(new FileInputStream(authInfoFile)));
@@ -313,7 +313,7 @@ public class TwitterRest {
 	public static void main (String[] args) {
 		OAuthList = loadAuthInfo();
 		
-		String queryKeyWord = "©–¯“}";
+		String queryKeyWord = "è‡ªæ°‘å…š";
 		for (int i=0; i<args.length; i++) {
 			if(args[i].matches(cursorResetOption)) {
 				forceCursorReset = true;
