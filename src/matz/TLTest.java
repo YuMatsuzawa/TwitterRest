@@ -2,7 +2,6 @@ package matz;
 
 import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
-import twitter4j.json.DataObjectFactory;
 
 public class TLTest {
 	public static ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -27,7 +26,7 @@ public class TLTest {
 			Paging paging = new Paging(id);
 			ResponseList<Status> tl = twitter.getUserTimeline("hal_twitter");
 			for(Status status : tl) {
-				String rawJSON = DataObjectFactory.getRawJSON(status);
+				String rawJSON = TwitterObjectFactory.getRawJSON(status);
 				System.out.println(rawJSON);
 			}
 			

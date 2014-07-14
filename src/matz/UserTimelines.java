@@ -2,11 +2,7 @@ package matz;
 
 import java.io.*;
 
-import twitter4j.Paging;
-import twitter4j.ResponseList;
-import twitter4j.Status;
-import twitter4j.TwitterException;
-import twitter4j.json.DataObjectFactory;
+import twitter4j.*;
 
 public class UserTimelines extends TwitterRest {
 	private static boolean testPaging = false;
@@ -126,7 +122,7 @@ public class UserTimelines extends TwitterRest {
 				for (Status status : timeLine) {
 					long tmpid = status.getId(); 
 					maxid = (tmpid > maxid)? tmpid : maxid;
-					String rawJSON = DataObjectFactory.getRawJSON(status);
+					String rawJSON = TwitterObjectFactory.getRawJSON(status);
 					bw.write(rawJSON);
 					bw.newLine();
 				}
